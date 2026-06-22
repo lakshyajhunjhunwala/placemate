@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/placemate/',
+  base: process.env.VERCEL === '1' ? '/' : '/placemate/',
   plugins: [react()],
   server: {
     proxy: {
