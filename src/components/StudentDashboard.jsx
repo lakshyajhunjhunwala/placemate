@@ -5,6 +5,7 @@ import {
   Trash2, Send, Search, CheckCircle, Clock, XCircle, ArrowUpRight,
   TrendingUp, Star, HelpCircle, GraduationCap
 } from 'lucide-react';
+import { api } from '../api';
 
 export default function StudentDashboard({
   student,
@@ -115,7 +116,7 @@ export default function StudentDashboard({
     updateProfile({ readinessScore: calculated });
   };
 
-  const handleSendChat = (e) => {
+  const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
     const userMsg = chatInput.trim();
@@ -123,23 +124,12 @@ export default function StudentDashboard({
     setChatMessages(newMsgs);
     setChatInput('');
 
-    // Simulated AI response logic
-    setTimeout(() => {
-      let responseText = "That's an interesting question! For placement prep, I highly recommend building projects and practicing Data Structures & Algorithms on a regular basis. Would you like details on a specific role roadmap?";
-      const msgLower = userMsg.toLowerCase();
-      
-      if (msgLower.includes('resume') || msgLower.includes('cv')) {
-        responseText = "To make a stand-out resume, keep it to one page, highlight quantifiable metrics in projects (e.g., 'reduced load time by 30%'), and list skills matching the job description. Don't forget to upload it to our Resume Vault!";
-      } else if (msgLower.includes('cgpa') || msgLower.includes('gpa') || msgLower.includes('eligibility')) {
-        responseText = `Your current CGPA is ${student.cgpa}. Many top recruiting companies require a minimum CGPA of 7.5 or 8.0, and super-dream companies sometimes set thresholds at 8.5. Keep working hard to maintain or boost it!`;
-      } else if (msgLower.includes('interview') || msgLower.includes('dsa') || msgLower.includes('experience')) {
-        responseText = "Interview processes typically feature a coding round (DSA & system architecture) followed by 1-2 rounds of technical interviews and an HR fit round. Browse our Discussion Portal to read what companies like Amazon or Google asked seniors recently!";
-      } else if (msgLower.includes('roadmap') || msgLower.includes('path') || msgLower.includes('frontend') || msgLower.includes('developer')) {
-        responseText = "Under the Career Roadmaps tab, you can track progress on roles like Frontend Developer. Start with React, CSS layouts, and web optimization, then build 2-3 responsive projects to display in your profile.";
-      }
-      
-      setChatMessages(prev => [...prev, { sender: 'ai', text: responseText }]);
-    }, 600);
+    try {
+      const response = await api.sendAiChatMessage(userMsg, student.cgpa);
+      setChatMessages(prev => [...prev, { sender: 'ai', text: response.text }]);
+    } catch (err) {
+      setChatMessages(prev => [...prev, { sender: 'ai', text: "Sorry, I am having trouble connecting to the AI assistant right now." }]);
+    }
   };
 
   // Filtered Jobs

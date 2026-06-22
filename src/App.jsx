@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   GraduationCap, Briefcase, Users, Building, 
   MessageSquare, Compass, ShieldAlert, ShieldCheck, 
@@ -8,6 +8,7 @@ import {
 import StudentDashboard from './components/StudentDashboard';
 import OfficerDashboard from './components/OfficerDashboard';
 import HODDashboard from './components/HODDashboard';
+import { api } from './api';
 
 // Mock Data Definitions
 const INITIAL_STUDENT_PROFILE = {
@@ -248,6 +249,61 @@ export default function App() {
   const [email, setEmail] = useState(CREDENTIALS.student.email);
   const [password, setPassword] = useState(CREDENTIALS.student.password);
   const [loginError, setLoginError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Global States
+  const [studentProfile, setStudentProfile] = useState({});
+  const [students, setStudents] = useState([]);
+  const [companies, setCompanies] = useState([]);
+  const [jobs, setJobs] = useState([]);
+  const [applications, setApplications] = useState([]);
+  const [discussions, setDiscussions] = useState([]);
+  const [resumes, setResumes] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const loadData = async (userRole) => {
+    try {
+      if (userRole === 'student') {
+        const profile = await api.getStudentProfile();
+        setStudentProfile(profile);
+        
+        const resList = await api.getResumes();
+        setResumes(resList);
+        
+        const noteList = await api.getNotifications();
+        setNotifications(noteList);
+      } else {
+        const studsList = await api.getStudents();
+        setStudents(studsList);
+      }
+      
+      const compList = await api.getCompanies();
+      setCompanies(compList);
+      
+      const jobList = await api.getJobs();
+      setJobs(jobList);
+      
+      const appList = await api.getApplications();
+      setApplications(appList);
+      
+      const discList = await api.getDiscussions();
+      setDiscussions(discList);
+    } catch (err) {
+      console.error("Error loading data from API:", err);
+    }
+  };
+
+  useEffect(() => {
+    const token = api.getToken();
+    const user = api.getCurrentUser();
+    if (token && user) {
+      setRole(user.role);
+      setIsLoggedIn(true);
+      setIsLoading(true);
+      loadData(user.role).finally(() => setIsLoading(false));
+    }
+  }, []);
 
   const handleRoleTabChange = (selectedRole) => {
     setLoginRole(selectedRole);
@@ -256,111 +312,151 @@ export default function App() {
     setLoginError('');
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    const correctCreds = CREDENTIALS[loginRole];
-    if (email === correctCreds.email && password === correctCreds.password) {
-      setRole(loginRole);
+    setLoginError('');
+    try {
+      setIsLoading(true);
+      const data = await api.login(email, password);
+      setRole(data.user.role);
       setIsLoggedIn(true);
       setActiveSubTab('overview');
-      setLoginError('');
-    } else {
-      setLoginError('Invalid credentials. Please use the pre-filled demo login details.');
+      await loadData(data.user.role);
+    } catch (err) {
+      setLoginError(err.message || 'Invalid credentials.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Global States
-  const [studentProfile, setStudentProfile] = useState(INITIAL_STUDENT_PROFILE);
-  const [students, setStudents] = useState(INITIAL_STUDENTS_LIST);
-  const [companies, setCompanies] = useState(INITIAL_COMPANIES);
-  const [jobs, setJobs] = useState(INITIAL_JOBS);
-  const [applications, setApplications] = useState(INITIAL_APPLICATIONS);
-  const [discussions, setDiscussions] = useState(INITIAL_DISCUSSIONS);
-  const [resumes, setResumes] = useState([
-    { id: 'res-1', name: 'Alex_Johnson_Resume_CSE_2026.pdf', date: '2026-06-05', primary: true }
-  ]);
-
-  // Notifications State
-  const [notifications, setNotifications] = useState([
-    { id: 'n-1', text: 'Google drive eligibility released.', read: false },
-    { id: 'n-2', text: 'Microsoft interview scheduled.', read: false }
-  ]);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const handleLogout = () => {
+    api.logout();
+    setIsLoggedIn(false);
+    setStudentProfile({});
+    setStudents([]);
+    setCompanies([]);
+    setJobs([]);
+    setApplications([]);
+    setDiscussions([]);
+    setResumes([]);
+    setNotifications([]);
+  };
 
   // State mutators shared across views
-  const applyForJob = (jobId) => {
-    const newApp = {
-      id: `app-${Date.now()}`,
-      studentId: studentProfile.id,
-      jobId,
-      stage: 'Applied',
-      date: new Date().toISOString().split('T')[0]
-    };
-    setApplications([...applications, newApp]);
-  };
-
-  const updateStudentProfile = (updatedFields) => {
-    const updated = { ...studentProfile, ...updatedFields };
-    setStudentProfile(updated);
-    // Update inside list
-    setStudents(prev => prev.map(s => s.id === studentProfile.id ? { ...s, ...updatedFields } : s));
-  };
-
-  const verifyStudent = (studentId, isVerified) => {
-    setStudents(prev => prev.map(s => s.id === studentId ? { 
-      ...s, 
-      verified: isVerified,
-      profileStatus: isVerified ? 'VERIFIED' : 'SUBMITTED'
-    } : s));
-    if (studentId === studentProfile.id) {
-      setStudentProfile(prev => ({ 
-        ...prev, 
-        verified: isVerified,
-        profileStatus: isVerified ? 'VERIFIED' : 'SUBMITTED'
-      }));
+  const applyForJob = async (jobId) => {
+    try {
+      const newApp = await api.applyForJob(jobId);
+      setApplications(prev => [...prev, newApp]);
+    } catch (err) {
+      alert(err.message || "Failed to apply for job.");
     }
   };
 
-  const addCompany = (companyData) => {
-    setCompanies(prev => [...prev, { id: `comp-${Date.now()}`, ...companyData }]);
+  const updateStudentProfile = async (updatedFields) => {
+    try {
+      const updated = await api.updateStudentProfile(updatedFields);
+      setStudentProfile(updated);
+      setStudents(prev => prev.map(s => s.id === updated.id ? { ...s, ...updatedFields } : s));
+    } catch (err) {
+      alert(err.message || "Failed to update profile.");
+    }
   };
 
-  const addJob = (jobData) => {
-    setJobs(prev => [...prev, { id: `job-${Date.now()}`, ...jobData }]);
-  };
-
-  const updateApplicationStage = (appId, stage) => {
-    setApplications(prevApps => prevApps.map(app => {
-      if (app.id === appId) {
-        if (stage === 'Selected' && app.stage !== 'Selected') {
-          // Increment company hiredCount
-          const targetJob = jobs.find(j => j.id === app.jobId);
-          if (targetJob) {
-            setCompanies(prevComps => prevComps.map(c => 
-              c.name === targetJob.company ? { ...c, hiredCount: c.hiredCount + 1 } : c
-            ));
-          }
-        }
-        return { ...app, stage };
+  const verifyStudent = async (studentId, isVerified) => {
+    try {
+      const updatedStudent = await api.verifyStudent(studentId, isVerified);
+      setStudents(prev => prev.map(s => s.id === studentId ? { 
+        ...s, 
+        verified: isVerified,
+        profileStatus: isVerified ? 'VERIFIED' : 'SUBMITTED'
+      } : s));
+      if (studentProfile && studentProfile.id === studentId) {
+        setStudentProfile(prev => ({ 
+          ...prev, 
+          verified: isVerified,
+          profileStatus: isVerified ? 'VERIFIED' : 'SUBMITTED'
+        }));
       }
-      return app;
-    }));
+    } catch (err) {
+      alert(err.message || "Failed to verify student.");
+    }
   };
 
-  const addDiscussionPost = (post) => {
-    setDiscussions(prev => [{ id: `disc-${Date.now()}`, ...post }, ...prev]);
+  const addCompany = async (companyData) => {
+    try {
+      const newCompany = await api.addCompany(companyData);
+      setCompanies(prev => [...prev, newCompany]);
+    } catch (err) {
+      alert(err.message || "Failed to add company.");
+    }
   };
 
-  const addResume = (resume) => {
-    setResumes(prev => [...prev, { id: `res-${Date.now()}`, ...resume }]);
+  const addJob = async (jobData) => {
+    try {
+      const newJob = await api.addJob(jobData);
+      setJobs(prev => [...prev, newJob]);
+    } catch (err) {
+      alert(err.message || "Failed to add job.");
+    }
   };
 
-  const deleteResume = (resId) => {
-    setResumes(prev => prev.filter(r => r.id !== resId));
+  const updateApplicationStage = async (appId, stage) => {
+    try {
+      await api.updateApplicationStage(appId, stage);
+      setApplications(prevApps => prevApps.map(app => {
+        if (app.id === appId) {
+          if (stage === 'Selected' && app.stage !== 'Selected') {
+            const targetJob = jobs.find(j => j.id === app.jobId);
+            if (targetJob) {
+              setCompanies(prevComps => prevComps.map(c => 
+                c.name === targetJob.company ? { ...c, hiredCount: c.hiredCount + 1 } : c
+              ));
+            }
+          }
+          return { ...app, stage };
+        }
+        return app;
+      }));
+    } catch (err) {
+      alert(err.message || "Failed to update application stage.");
+    }
   };
 
-  const setPrimaryResume = (resId) => {
-    setResumes(prev => prev.map(r => ({ ...r, primary: r.id === resId })));
+  const addDiscussionPost = async (post) => {
+    try {
+      const newPost = await api.addDiscussionPost(post);
+      setDiscussions(prev => [newPost, ...prev]);
+    } catch (err) {
+      alert(err.message || "Failed to add discussion post.");
+    }
+  };
+
+  const addResume = async (resume) => {
+    try {
+      const newResume = await api.addResume(resume.name);
+      setResumes(prev => [...prev, newResume]);
+    } catch (err) {
+      alert(err.message || "Failed to add resume.");
+    }
+  };
+
+  const deleteResume = async (resId) => {
+    try {
+      await api.deleteResume(resId);
+      const resList = await api.getResumes();
+      setResumes(resList);
+    } catch (err) {
+      alert(err.message || "Failed to delete resume.");
+    }
+  };
+
+  const setPrimaryResume = async (resId) => {
+    try {
+      await api.setPrimaryResume(resId);
+      setResumes(prev => prev.map(r => ({ ...r, primary: r.id === resId })));
+    } catch (err) {
+      alert(err.message || "Failed to set primary resume.");
+    }
   };
 
   if (!isLoggedIn) {
@@ -598,7 +694,7 @@ export default function App() {
 
         {/* Bottom Logout Button */}
         <button 
-          onClick={() => setIsLoggedIn(false)}
+          onClick={handleLogout}
           style={{ 
             display: 'flex',
             alignItems: 'center',
@@ -624,47 +720,56 @@ export default function App() {
 
       {/* Content Panel */}
       <main style={{ flex: 1, padding: '24px 40px', overflowY: 'auto', maxHeight: '100vh' }}>
-        {role === 'student' && (
-          <StudentDashboard 
-            student={studentProfile}
-            jobs={jobs}
-            applications={applications}
-            applyForJob={applyForJob}
-            updateProfile={updateStudentProfile}
-            discussions={discussions}
-            addDiscussionPost={addDiscussionPost}
-            resumes={resumes}
-            addResume={addResume}
-            deleteResume={deleteResume}
-            setPrimaryResume={setPrimaryResume}
-            activeSubTab={activeSubTab}
-            setActiveSubTab={setActiveSubTab}
-          />
-        )}
+        {isLoading ? (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ border: '4px solid rgba(255,255,255,0.1)', borderLeft: '4px solid hsl(var(--primary))', borderRadius: '50%', width: '40px', height: '40px', animation: 'spin 1s linear infinite' }}></div>
+            <span style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.95rem' }}>Loading ecosystem data...</span>
+          </div>
+        ) : (
+          <>
+            {role === 'student' && (
+              <StudentDashboard 
+                student={studentProfile}
+                jobs={jobs}
+                applications={applications}
+                applyForJob={applyForJob}
+                updateProfile={updateStudentProfile}
+                discussions={discussions}
+                addDiscussionPost={addDiscussionPost}
+                resumes={resumes}
+                addResume={addResume}
+                deleteResume={deleteResume}
+                setPrimaryResume={setPrimaryResume}
+                activeSubTab={activeSubTab}
+                setActiveSubTab={setActiveSubTab}
+              />
+            )}
 
-        {role === 'officer' && (
-          <OfficerDashboard 
-            students={students}
-            companies={companies}
-            jobs={jobs}
-            applications={applications}
-            verifyStudent={verifyStudent}
-            addCompany={addCompany}
-            addJob={addJob}
-            updateApplicationStage={updateApplicationStage}
-            activeSubTab={activeSubTab}
-            setActiveSubTab={setActiveSubTab}
-          />
-        )}
+            {role === 'officer' && (
+              <OfficerDashboard 
+                students={students}
+                companies={companies}
+                jobs={jobs}
+                applications={applications}
+                verifyStudent={verifyStudent}
+                addCompany={addCompany}
+                addJob={addJob}
+                updateApplicationStage={updateApplicationStage}
+                activeSubTab={activeSubTab}
+                setActiveSubTab={setActiveSubTab}
+              />
+            )}
 
-        {role === 'hod' && (
-          <HODDashboard 
-            students={students}
-            companies={companies}
-            jobs={jobs}
-            applications={applications}
-            activeSubTab={activeSubTab}
-          />
+            {role === 'hod' && (
+              <HODDashboard 
+                students={students}
+                companies={companies}
+                jobs={jobs}
+                applications={applications}
+                activeSubTab={activeSubTab}
+              />
+            )}
+          </>
         )}
       </main>
 
