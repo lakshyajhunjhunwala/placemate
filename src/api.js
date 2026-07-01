@@ -184,6 +184,52 @@ const mockApi = {
     return { token, user, studentProfile };
   },
 
+  register: async (registerData) => {
+    const db = getMockDb();
+    const existing = db.users.find(u => u.email === registerData.email);
+    if (existing) throw new Error('Email already registered.');
+    
+    const uId = 'u-' + Date.now();
+    const sId = 'stud-' + Date.now();
+    
+    const newUser = {
+      id: uId,
+      email: registerData.email,
+      password: registerData.password,
+      role: 'student'
+    };
+    
+    const newStudent = {
+      id: sId,
+      userId: uId,
+      email: registerData.email,
+      name: registerData.name,
+      registerNo: registerData.registerNo || '',
+      department: registerData.department || '',
+      year: registerData.year || '',
+      cgpa: null,
+      skills: [],
+      projects: [],
+      certifications: [],
+      achievements: [],
+      verified: false,
+      profileStatus: 'PENDING',
+      placementStatus: 'NOT PLACED',
+      readinessScore: 0
+    };
+    
+    db.users.push(newUser);
+    db.students.push(newStudent);
+    saveMockDb(db);
+    
+    const token = 'mock_jwt_token_' + uId;
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('studentId', sId);
+    
+    return { token, user: newUser, studentProfile: newStudent };
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -482,6 +528,21 @@ export const api = isMockFallback() ? mockApi : {
     const data = await apiRequest('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
+    });
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    if (data.studentProfile) {
+      localStorage.setItem('studentId', data.studentProfile.id || data.studentProfile._id);
+    } else {
+      localStorage.removeItem('studentId');
+    }
+    return data;
+  },
+
+  register: async (registerData) => {
+    const data = await apiRequest('/api/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(registerData)
     });
     localStorage.setItem('token', data.token);
     localStorage.setItem('user', JSON.stringify(data.user));

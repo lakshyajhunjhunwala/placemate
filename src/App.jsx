@@ -3,7 +3,8 @@ import {
   GraduationCap, Briefcase, Users, Building, 
   MessageSquare, Compass, ShieldAlert, ShieldCheck, 
   Bell, Search, Globe, LogOut, ChevronRight, Menu,
-  FileText, TrendingUp, CheckCircle, Award
+  FileText, TrendingUp, CheckCircle, Award,
+  Eye, EyeOff, ArrowRight
 } from 'lucide-react';
 import StudentDashboard from './components/StudentDashboard';
 import OfficerDashboard from './components/OfficerDashboard';
@@ -251,6 +252,17 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Registration and UI states
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [registerName, setRegisterName] = useState('');
+  const [registerEmail, setRegisterEmail] = useState('');
+  const [registerRegNo, setRegisterRegNo] = useState('');
+  const [registerDepartment, setRegisterDepartment] = useState('Computer Science');
+  const [registerYear, setRegisterYear] = useState('3rd Year');
+  const [registerPassword, setRegisterPassword] = useState('');
+
   // Global States
   const [studentProfile, setStudentProfile] = useState({});
   const [students, setStudents] = useState([]);
@@ -264,33 +276,60 @@ export default function App() {
 
   const loadData = async (userRole) => {
     try {
+      const profilePromise = userRole === 'student' 
+        ? api.getStudentProfile().catch(e => { console.error("Error loading profile:", e); return {}; })
+        : Promise.resolve({});
+        
+      const resumesPromise = userRole === 'student'
+        ? api.getResumes().catch(e => { console.error("Error loading resumes:", e); return []; })
+        : Promise.resolve([]);
+        
+      const notificationsPromise = userRole === 'student'
+        ? api.getNotifications().catch(e => { console.error("Error loading notifications:", e); return []; })
+        : Promise.resolve([]);
+        
+      const studentsPromise = userRole !== 'student'
+        ? api.getStudents().catch(e => { console.error("Error loading students:", e); return []; })
+        : Promise.resolve([]);
+
+      const companiesPromise = api.getCompanies().catch(e => { console.error("Error loading companies:", e); return []; });
+      const jobsPromise = api.getJobs().catch(e => { console.error("Error loading jobs:", e); return []; });
+      const applicationsPromise = api.getApplications().catch(e => { console.error("Error loading applications:", e); return []; });
+      const discussionsPromise = api.getDiscussions().catch(e => { console.error("Error loading discussions:", e); return []; });
+
+      const [
+        profile,
+        resList,
+        noteList,
+        studsList,
+        compList,
+        jobList,
+        appList,
+        discList
+      ] = await Promise.all([
+        profilePromise,
+        resumesPromise,
+        notificationsPromise,
+        studentsPromise,
+        companiesPromise,
+        jobsPromise,
+        applicationsPromise,
+        discussionsPromise
+      ]);
+
       if (userRole === 'student') {
-        const profile = await api.getStudentProfile();
-        setStudentProfile(profile);
-        
-        const resList = await api.getResumes();
-        setResumes(resList);
-        
-        const noteList = await api.getNotifications();
-        setNotifications(noteList);
+        setStudentProfile(profile || {});
+        setResumes(resList || []);
+        setNotifications(noteList || []);
       } else {
-        const studsList = await api.getStudents();
-        setStudents(studsList);
+        setStudents(studsList || []);
       }
-      
-      const compList = await api.getCompanies();
-      setCompanies(compList);
-      
-      const jobList = await api.getJobs();
-      setJobs(jobList);
-      
-      const appList = await api.getApplications();
-      setApplications(appList);
-      
-      const discList = await api.getDiscussions();
-      setDiscussions(discList);
+      setCompanies(compList || []);
+      setJobs(jobList || []);
+      setApplications(appList || []);
+      setDiscussions(discList || []);
     } catch (err) {
-      console.error("Error loading data from API:", err);
+      console.error("Error loading data in parallel:", err);
     }
   };
 
@@ -324,6 +363,41 @@ export default function App() {
       await loadData(data.user.role);
     } catch (err) {
       setLoginError(err.message || 'Invalid credentials.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
+    setLoginError('');
+    if (!registerName || !registerEmail || !registerPassword) {
+      setLoginError('Name, email, and password are required.');
+      return;
+    }
+    try {
+      setIsLoading(true);
+      const data = await api.register({
+        name: registerName,
+        email: registerEmail,
+        password: registerPassword,
+        registerNo: registerRegNo,
+        department: registerDepartment,
+        year: registerYear
+      });
+      setRole('student');
+      setIsLoggedIn(true);
+      setActiveSubTab('overview');
+      await loadData('student');
+      
+      // Clear fields
+      setRegisterName('');
+      setRegisterEmail('');
+      setRegisterRegNo('');
+      setRegisterPassword('');
+      setIsRegisterMode(false);
+    } catch (err) {
+      setLoginError(err.message || 'Registration failed.');
     } finally {
       setIsLoading(false);
     }
@@ -461,108 +535,449 @@ export default function App() {
 
   if (!isLoggedIn) {
     return (
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        minHeight: '100vh', 
-        background: 'radial-gradient(circle at center, hsl(240 10% 12%) 0%, hsl(var(--background)) 100%)',
-        padding: '20px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Glow Effects in Background */}
-        <div style={{ 
-          position: 'absolute', top: '20%', left: '25%', width: '300px', height: '300px',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(0,0,0,0) 70%)', zIndex: 1 
-        }}></div>
-        <div style={{ 
-          position: 'absolute', bottom: '20%', right: '25%', width: '300px', height: '300px',
-          background: 'radial-gradient(circle, rgba(168,85,247,0.12) 0%, rgba(0,0,0,0) 70%)', zIndex: 1 
-        }}></div>
-
-        <div className="glass-card animate-fade-in" style={{ width: '480px', maxWidth: '100%', padding: '40px', zIndex: 2, position: 'relative' }}>
-          {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', marginBottom: '24px' }}>
-            <div style={{ background: 'hsl(var(--primary))', padding: '8px', borderRadius: '10px', color: 'white' }}>
-              <GraduationCap size={28} />
+      <div className="split-container">
+        {/* Left Side: Dark Grid Panel */}
+        <div className="left-panel login-grid-bg">
+          {/* Header Branding */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ background: '#2563eb', padding: '6px', borderRadius: '8px', color: 'white' }}>
+              <GraduationCap size={22} />
             </div>
-            <span className="text-gradient" style={{ fontSize: '2.1rem', fontWeight: 800, letterSpacing: '-0.5px' }}>Placemate</span>
+            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>Placemate</span>
           </div>
 
-          <h2 style={{ fontSize: '1.45rem', fontWeight: 700, textAlign: 'center', marginBottom: '8px', color: 'white' }}>Sign in to Ecosystem</h2>
-          <p style={{ color: 'hsl(var(--muted-foreground))', fontSize: '0.9rem', textAlign: 'center', marginBottom: '32px' }}>
-            Access your Student, Placement Officer, or HOD dashboard.
-          </p>
-
-          {/* Role Tabs */}
-          <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '4px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)', marginBottom: '24px' }}>
-            {['student', 'officer', 'hod'].map(r => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => handleRoleTabChange(r)}
-                style={{
-                  flex: 1,
-                  padding: '10px',
-                  border: 'none',
-                  borderRadius: '6px',
-                  background: loginRole === r ? 'hsl(var(--primary))' : 'transparent',
-                  color: loginRole === r ? 'white' : 'hsl(var(--muted-foreground))',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  fontSize: '0.85rem',
-                  textTransform: 'capitalize',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {r === 'officer' ? 'Officer' : r}
-              </button>
-            ))}
+          {/* Middle Typography */}
+          <div style={{ margin: 'auto 0' }}>
+            <h1 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, lineHeight: 1.15, color: '#f8fafc', marginBottom: '20px' }}>
+              Your placement <br/>
+              <span style={{ fontStyle: 'italic', color: '#93c5fd' }}>journey starts</span> <br/>
+              <span style={{ color: '#10b981' }}>right here.</span>
+            </h1>
+            <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, maxWidth: '440px', fontWeight: 400 }}>
+              Placemate is a full-stack placement management system — connecting students, faculty, and officers in one unified platform.
+            </p>
           </div>
 
-          <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Bottom Portal Switchers */}
+          <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {[
+                { key: 'student', label: 'Student Portal', color: '#2563eb' },
+                { key: 'hod', label: 'Faculty Portal', color: '#a855f7' },
+                { key: 'officer', label: 'Officer Portal', color: '#10b981' }
+              ].map(p => {
+                const isActive = loginRole === p.key;
+                return (
+                  <div 
+                    key={p.key}
+                    onClick={() => {
+                      if (!isRegisterMode) {
+                        handleRoleTabChange(p.key);
+                      } else {
+                        setIsRegisterMode(false);
+                        handleRoleTabChange(p.key);
+                      }
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '10px 16px',
+                      borderRadius: '8px',
+                      background: isActive ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+                      border: isActive ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      width: 'fit-content'
+                    }}
+                  >
+                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.color }}></div>
+                    <span style={{ color: isActive ? '#ffffff' : '#94a3b8', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500 }}>
+                      {p.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side: Cream Form Panel */}
+        <div className="right-panel">
+          <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto' }}>
+            {/* Header */}
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1.5px', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+              PLACEMENT PORTAL
+            </span>
+            <h2 className="font-serif" style={{ fontSize: '2.4rem', fontWeight: 500, color: '#111827', marginBottom: '8px' }}>
+              {isRegisterMode ? 'Activate account' : 'Welcome back'}
+            </h2>
+            <p style={{ color: '#6b7280', fontSize: '0.95rem', marginBottom: '32px' }}>
+              {isRegisterMode 
+                ? 'Activate your student credentials to log in.' 
+                : `Sign in to continue to your ${loginRole === 'hod' ? 'faculty' : loginRole} portal.`
+              }
+            </p>
+
             {loginError && (
-              <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: '#fca5a5', fontSize: '0.85rem', textAlign: 'center' }}>
+              <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '24px', textAlign: 'center' }}>
                 {loginError}
               </div>
             )}
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '6px', fontWeight: 500 }}>Email Address</label>
-              <input
-                type="email"
-                placeholder="name@placemate.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid hsl(var(--border))', color: 'white', borderRadius: '8px', fontSize: '0.95rem' }}
-                required
-              />
-            </div>
+            {!isRegisterMode ? (
+              /* LOGIN FORM */
+              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    EMAIL ADDRESS
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="name@placemate.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      background: 'white',
+                      color: '#1f2937',
+                      fontSize: '0.95rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    required
+                  />
+                </div>
 
-            <div>
-              <label style={{ display: 'block', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))', marginBottom: '6px', fontWeight: 500 }}>Password</label>
-              <input
-                type="password"
-                placeholder="Enter password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                style={{ width: '100%', padding: '12px', background: 'rgba(0,0,0,0.25)', border: '1px solid hsl(var(--border))', color: 'white', borderRadius: '8px', fontSize: '0.95rem' }}
-                required
-              />
-            </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                    PASSWORD
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showLoginPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '12px 48px 12px 16px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.95rem',
+                        outline: 'none'
+                      }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#9ca3af',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
 
-            <button
-              type="submit"
-              style={{ width: '100%', padding: '12px', background: 'hsl(var(--primary))', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem', fontWeight: 600, marginTop: '8px', boxShadow: '0 4px 12px rgba(99, 102, 241, 0.25)' }}
-            >
-              Sign In
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: '#111827',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s',
+                    marginTop: '8px',
+                    opacity: isLoading ? 0.7 : 1
+                  }}
+                >
+                  {isLoading ? 'Signing In...' : 'Sign In'} <ArrowRight size={18} />
+                </button>
 
-          {/* Quick Demo Info */}
-          <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', borderRadius: '8px', fontSize: '0.8rem', color: 'hsl(var(--muted-foreground))', textAlign: 'center' }}>
-            💡 Demo details are pre-filled automatically when you switch tabs above. Just click **Sign In** to log in instantly!
+                {loginRole === 'student' && (
+                  <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>First time? </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsRegisterMode(true);
+                        setLoginError('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#2563eb',
+                        fontWeight: 600,
+                        fontSize: '0.9rem',
+                        cursor: 'pointer',
+                        padding: '0 4px',
+                        textDecoration: 'underline'
+                      }}
+                    >
+                      Activate your account ➔
+                    </button>
+                  </div>
+                )}
+              </form>
+            ) : (
+              /* REGISTRATION FORM */
+              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    FULL NAME
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    value={registerName}
+                    onChange={(e) => setRegisterName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px 14px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      background: 'white',
+                      color: '#1f2937',
+                      fontSize: '0.9rem',
+                      outline: 'none'
+                    }}
+                    required
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      EMAIL ADDRESS
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="john@gmail.com"
+                      value={registerEmail}
+                      onChange={(e) => setRegisterEmail(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      REGISTER NUMBER
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="21BCE0123"
+                      value={registerRegNo}
+                      onChange={(e) => setRegisterRegNo(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      DEPARTMENT
+                    </label>
+                    <select
+                      value={registerDepartment}
+                      onChange={(e) => setRegisterDepartment(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Information Technology">Information Technology</option>
+                      <option value="Electronics & Communication">Electronics & Comm</option>
+                      <option value="Mechanical Engineering">Mechanical Eng</option>
+                      <option value="Civil Engineering">Civil Eng</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      ACADEMIC YEAR
+                    </label>
+                    <select
+                      value={registerYear}
+                      onChange={(e) => setRegisterYear(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                    PASSWORD
+                  </label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showRegisterPassword ? 'text' : 'password'}
+                      placeholder="••••••••"
+                      value={registerPassword}
+                      onChange={(e) => setRegisterPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 48px 10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
+                        outline: 'none'
+                      }}
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        color: '#9ca3af',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
+                      }}
+                    >
+                      {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  style={{
+                    width: '100%',
+                    padding: '14px',
+                    background: '#111827',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    transition: 'background-color 0.2s',
+                    marginTop: '8px',
+                    opacity: isLoading ? 0.7 : 1
+                  }}
+                >
+                  {isLoading ? 'Activating...' : 'Activate Account'} <ArrowRight size={18} />
+                </button>
+
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>Already activated? </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsRegisterMode(false);
+                      setLoginError('');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#2563eb',
+                      fontWeight: 600,
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                      padding: '0 4px',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    Sign In ➔
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Quick Demo Info */}
+            {!isRegisterMode && (
+              <div style={{ marginTop: '32px', padding: '14px 16px', background: '#fdfbf7', border: '1px solid #f3f0e8', borderRadius: '8px', fontSize: '0.8rem', color: '#6b7280', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '1rem', lineHeight: '1' }}>💡</span>
+                <div>
+                  <strong>Demo Mode</strong>: Credentials auto-fill when switching portal tabs on the left. Click <strong>Sign In</strong> to proceed.
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

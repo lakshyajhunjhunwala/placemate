@@ -151,6 +151,70 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// 1.5. Auth Register Route
+app.post('/api/auth/register', async (req, res) => {
+  const { email, password, name, registerNo, department, year } = req.body;
+  
+  if (!email || !password || !name) {
+    return res.status(400).json({ message: 'Email, password, and name are required.' });
+  }
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered.' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create User
+    const newUser = await User.create({
+      email,
+      password: hashedPassword,
+      role: 'student'
+    });
+
+    // Create Student Profile
+    const newStudent = await Student.create({
+      userId: newUser._id,
+      name,
+      registerNo: registerNo || '',
+      department: department || '',
+      year: year || '',
+      cgpa: null,
+      skills: [],
+      projects: [],
+      certifications: [],
+      achievements: [],
+      verified: false,
+      profileStatus: 'PENDING',
+      placementStatus: 'NOT PLACED',
+      readinessScore: 0
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: newUser._id, email: newUser.email, role: newUser.role },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.status(201).json({
+      token,
+      user: {
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role
+      },
+      studentProfile: newStudent
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ message: 'Server error during registration.' });
+  }
+});
+
 // 2. Get Student Profile (Self)
 app.get('/api/student/profile', authenticateToken, authorizeRoles('student'), async (req, res) => {
   try {
