@@ -4,7 +4,7 @@ import {
   MessageSquare, Compass, ShieldAlert, ShieldCheck, 
   Bell, Search, Globe, LogOut, ChevronRight, Menu,
   FileText, TrendingUp, CheckCircle, Award,
-  Eye, EyeOff, ArrowRight
+  Eye, EyeOff, ArrowRight, Rocket, Shield, Laptop, Code, X
 } from 'lucide-react';
 import StudentDashboard from './components/StudentDashboard';
 import OfficerDashboard from './components/OfficerDashboard';
@@ -254,6 +254,7 @@ export default function App() {
 
   // Registration and UI states
   const [isRegisterMode, setIsRegisterMode] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
   const [registerName, setRegisterName] = useState('');
@@ -546,200 +547,446 @@ export default function App() {
   };
 
   if (!isLoggedIn) {
-    return (
-      <div className="split-container">
-        {/* Left Side: Dark Grid Panel */}
-        <div className="left-panel login-grid-bg">
-          {/* Header Branding */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ background: '#2563eb', padding: '6px', borderRadius: '8px', color: 'white' }}>
-              <GraduationCap size={22} />
-            </div>
-            <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>Placemate</span>
-          </div>
-
-          {/* Middle Typography */}
-          <div style={{ margin: 'auto 0' }}>
-            <h1 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, lineHeight: 1.15, color: '#f8fafc', marginBottom: '20px' }}>
-              Your placement <br/>
-              <span style={{ fontStyle: 'italic', color: '#93c5fd' }}>journey starts</span> <br/>
-              <span style={{ color: '#10b981' }}>right here.</span>
-            </h1>
-            <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, maxWidth: '440px', fontWeight: 400 }}>
-              Placemate is a full-stack placement management system — connecting students, faculty, and officers in one unified platform.
-            </p>
-          </div>
-
-          {/* Bottom Portal Switchers */}
-          <div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {[
-                { key: 'student', label: 'Student Portal', color: '#2563eb' },
-                { key: 'hod', label: 'Faculty Portal', color: '#a855f7' },
-                { key: 'officer', label: 'Officer Portal', color: '#10b981' }
-              ].map(p => {
-                const isActive = loginRole === p.key;
-                return (
-                  <div 
-                    key={p.key}
-                    onClick={() => {
-                      if (!isRegisterMode) {
-                        handleRoleTabChange(p.key);
-                      } else {
-                        setIsRegisterMode(false);
-                        handleRoleTabChange(p.key);
-                      }
-                    }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '10px 16px',
-                      borderRadius: '8px',
-                      background: isActive ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
-                      border: isActive ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                      width: 'fit-content'
-                    }}
-                  >
-                    <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.color }}></div>
-                    <span style={{ color: isActive ? '#ffffff' : '#94a3b8', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500 }}>
-                      {p.label}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* Right Side: Cream Form Panel */}
-        <div className="right-panel">
-          <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto' }}>
-            {/* Header */}
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1.5px', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-              PLACEMENT PORTAL
-            </span>
-            <h2 className="font-serif" style={{ fontSize: '2.4rem', fontWeight: 500, color: '#111827', marginBottom: '8px' }}>
-              {isRegisterMode ? 'Activate account' : 'Welcome back'}
-            </h2>
-            <p style={{ color: '#6b7280', fontSize: '0.95rem', marginBottom: '32px' }}>
-              {isRegisterMode 
-                ? 'Activate your student credentials to log in.' 
-                : `Sign in to continue to your ${loginRole === 'hod' ? 'faculty' : loginRole} portal.`
-              }
-            </p>
-
-            {loginError && (
-              <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '24px', textAlign: 'center' }}>
-                {loginError}
+    if (showLoginModal) {
+      return (
+        <div className="split-container" style={{ fontFamily: 'var(--font-sans)' }}>
+          {/* Left Side: Dark Grid Panel */}
+          <div className="left-panel login-grid-bg">
+            {/* Header Branding */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ background: '#2563eb', padding: '6px', borderRadius: '8px', color: 'white' }}>
+                <GraduationCap size={22} />
               </div>
-            )}
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>Placemate</span>
+            </div>
 
-            {!isRegisterMode ? (
-              /* LOGIN FORM */
-              <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                    EMAIL ADDRESS
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="name@placemate.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      background: 'white',
-                      color: '#1f2937',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                      transition: 'border-color 0.2s'
-                    }}
-                    required
-                  />
+            {/* Middle Typography */}
+            <div style={{ margin: 'auto 0' }}>
+              <h1 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, lineHeight: 1.15, color: '#f8fafc', marginBottom: '20px' }}>
+                Your placement <br/>
+                <span style={{ fontStyle: 'italic', color: '#93c5fd' }}>journey starts</span> <br/>
+                <span style={{ color: '#10b981' }}>right here.</span>
+              </h1>
+              <p style={{ color: '#94a3b8', fontSize: '1rem', lineHeight: 1.6, maxWidth: '440px', fontWeight: 400 }}>
+                Placemate is a full-stack placement management system — connecting students, faculty, and officers in one unified platform.
+              </p>
+            </div>
+
+            {/* Bottom Portal Switchers */}
+            <div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { key: 'student', label: 'Student Portal', color: '#2563eb' },
+                  { key: 'hod', label: 'Faculty Portal', color: '#a855f7' },
+                  { key: 'officer', label: 'Officer Portal', color: '#10b981' }
+                ].map(p => {
+                  const isActive = loginRole === p.key;
+                  return (
+                    <div 
+                      key={p.key}
+                      onClick={() => {
+                        if (!isRegisterMode) {
+                          handleRoleTabChange(p.key);
+                        } else {
+                          setIsRegisterMode(false);
+                          handleRoleTabChange(p.key);
+                        }
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '10px 16px',
+                        borderRadius: '8px',
+                        background: isActive ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+                        border: isActive ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid transparent',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                        width: 'fit-content'
+                      }}
+                    >
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: p.color }}></div>
+                      <span style={{ color: isActive ? '#ffffff' : '#94a3b8', fontSize: '0.9rem', fontWeight: isActive ? 600 : 500 }}>
+                        {p.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Side: Cream Form Panel */}
+          <div className="right-panel">
+            <div style={{ maxWidth: '420px', width: '100%', margin: '0 auto' }}>
+              {/* Back to Home Link */}
+              <button 
+                onClick={() => setShowLoginModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#4b5563',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  marginBottom: '28px',
+                  transition: 'color 0.2s'
+                }}
+                onMouseOver={(e) => e.target.style.color = '#111827'}
+                onMouseOut={(e) => e.target.style.color = '#4b5563'}
+              >
+                ← Back to home
+              </button>
+
+              {/* Header */}
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1.5px', color: '#9ca3af', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                PLACEMENT PORTAL
+              </span>
+              <h2 className="font-serif" style={{ fontSize: '2.4rem', fontWeight: 500, color: '#111827', marginBottom: '8px' }}>
+                {isRegisterMode ? 'Activate account' : 'Welcome back'}
+              </h2>
+              <p style={{ color: '#6b7280', fontSize: '0.95rem', marginBottom: '32px' }}>
+                {isRegisterMode 
+                  ? 'Activate your student credentials to log in.' 
+                  : `Sign in to continue to your ${loginRole === 'hod' ? 'faculty' : loginRole} portal.`
+                }
+              </p>
+
+              {loginError && (
+                <div style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.15)', borderRadius: '8px', color: '#b91c1c', fontSize: '0.85rem', marginBottom: '24px', textAlign: 'center' }}>
+                  {loginError}
                 </div>
+              )}
 
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                    PASSWORD
-                  </label>
-                  <div style={{ position: 'relative' }}>
+              {!isRegisterMode ? (
+                /* LOGIN FORM */
+                <form onSubmit={handleLoginSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                      EMAIL ADDRESS
+                    </label>
                     <input
-                      type={showLoginPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      type="email"
+                      placeholder="name@placemate.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       style={{
                         width: '100%',
-                        padding: '12px 48px 12px 16px',
+                        padding: '12px 16px',
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         background: 'white',
                         color: '#1f2937',
                         fontSize: '0.95rem',
+                        outline: 'none',
+                        transition: 'border-color 0.2s'
+                      }}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                      PASSWORD
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showLoginPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px 48px 12px 16px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.95rem',
+                          outline: 'none'
+                        }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#9ca3af',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      background: '#111827',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s',
+                      marginTop: '8px',
+                      opacity: isLoading ? 0.7 : 1
+                    }}
+                  >
+                    {isLoading ? 'Signing In...' : 'Sign In'} <ArrowRight size={18} />
+                  </button>
+
+                  {loginRole === 'student' && (
+                    <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                      <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>First time? </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRegisterMode(true);
+                          setLoginError('');
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#2563eb',
+                          fontWeight: 600,
+                          fontSize: '0.9rem',
+                          cursor: 'pointer',
+                          padding: '0 4px',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        Activate your account ➔
+                      </button>
+                    </div>
+                  )}
+                </form>
+              ) : (
+                /* REGISTRATION FORM */
+                <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      FULL NAME
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="John Doe"
+                      value={registerName}
+                      onChange={(e) => setRegisterName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 14px',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        background: 'white',
+                        color: '#1f2937',
+                        fontSize: '0.9rem',
                         outline: 'none'
                       }}
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      style={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        color: '#9ca3af',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {showLoginPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
                   </div>
-                </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    background: '#111827',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s',
-                    marginTop: '8px',
-                    opacity: isLoading ? 0.7 : 1
-                  }}
-                >
-                  {isLoading ? 'Signing In...' : 'Sign In'} <ArrowRight size={18} />
-                </button>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        EMAIL ADDRESS
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="john@gmail.com"
+                        value={registerEmail}
+                        onChange={(e) => setRegisterEmail(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.9rem',
+                          outline: 'none'
+                        }}
+                        required
+                      />
+                    </div>
 
-                {loginRole === 'student' && (
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        REGISTER NUMBER
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="21BCE0123"
+                        value={registerRegNo}
+                        onChange={(e) => setRegisterRegNo(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.9rem',
+                          outline: 'none'
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        DEPARTMENT
+                      </label>
+                      <select
+                        value={registerDepartment}
+                        onChange={(e) => setRegisterDepartment(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="Computer Science">Computer Science</option>
+                        <option value="Information Technology">Information Technology</option>
+                        <option value="Electronics & Communication">Electronics & Comm</option>
+                        <option value="Mechanical Engineering">Mechanical Eng</option>
+                        <option value="Civil Engineering">Civil Eng</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                        ACADEMIC YEAR
+                      </label>
+                      <select
+                        value={registerYear}
+                        onChange={(e) => setRegisterYear(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.9rem',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <option value="1st Year">1st Year</option>
+                        <option value="2nd Year">2nd Year</option>
+                        <option value="3rd Year">3rd Year</option>
+                        <option value="4th Year">4th Year</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
+                      PASSWORD
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showRegisterPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '10px 48px 10px 14px',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          background: 'white',
+                          color: '#1f2937',
+                          fontSize: '0.9rem',
+                          outline: 'none'
+                        }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: '#9ca3af',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '14px',
+                      background: '#111827',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '0.95rem',
+                      fontWeight: 600,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      transition: 'background-color 0.2s',
+                      marginTop: '8px',
+                      opacity: isLoading ? 0.7 : 1
+                    }}
+                  >
+                    {isLoading ? 'Activating...' : 'Activate Account'} <ArrowRight size={18} />
+                  </button>
+
                   <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                    <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>First time? </span>
+                    <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>Already activated? </span>
                     <button
                       type="button"
                       onClick={() => {
-                        setIsRegisterMode(true);
+                        setIsRegisterMode(false);
                         setLoginError('');
                       }}
                       style={{
@@ -753,245 +1000,242 @@ export default function App() {
                         textDecoration: 'underline'
                       }}
                     >
-                      Activate your account ➔
+                      Sign In ➔
                     </button>
                   </div>
-                )}
-              </form>
-            ) : (
-              /* REGISTRATION FORM */
-              <form onSubmit={handleRegisterSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    FULL NAME
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="John Doe"
-                    value={registerName}
-                    onChange={(e) => setRegisterName(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px 14px',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '8px',
-                      background: 'white',
-                      color: '#1f2937',
-                      fontSize: '0.9rem',
-                      outline: 'none'
-                    }}
-                    required
-                  />
-                </div>
+                </form>
+              )}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {/* Quick Demo Info */}
+              {!isRegisterMode && (
+                <div style={{ marginTop: '32px', padding: '14px 16px', background: '#fdfbf7', border: '1px solid #f3f0e8', borderRadius: '8px', fontSize: '0.8rem', color: '#6b7280', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                  <span style={{ fontSize: '1rem', lineHeight: '1' }}>💡</span>
                   <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      EMAIL ADDRESS
-                    </label>
-                    <input
-                      type="email"
-                      placeholder="john@gmail.com"
-                      value={registerEmail}
-                      onChange={(e) => setRegisterEmail(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        background: 'white',
-                        color: '#1f2937',
-                        fontSize: '0.9rem',
-                        outline: 'none'
-                      }}
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      REGISTER NUMBER
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="21BCE0123"
-                      value={registerRegNo}
-                      onChange={(e) => setRegisterRegNo(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        background: 'white',
-                        color: '#1f2937',
-                        fontSize: '0.9rem',
-                        outline: 'none'
-                      }}
-                      required
-                    />
+                    <strong>Demo Mode</strong>: Credentials auto-fill on selection. Click <strong>Sign In</strong> to proceed.
                   </div>
                 </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      DEPARTMENT
-                    </label>
-                    <select
-                      value={registerDepartment}
-                      onChange={(e) => setRegisterDepartment(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        background: 'white',
-                        color: '#1f2937',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Information Technology">Information Technology</option>
-                      <option value="Electronics & Communication">Electronics & Comm</option>
-                      <option value="Mechanical Engineering">Mechanical Eng</option>
-                      <option value="Civil Engineering">Civil Eng</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                      ACADEMIC YEAR
-                    </label>
-                    <select
-                      value={registerYear}
-                      onChange={(e) => setRegisterYear(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        background: 'white',
-                        color: '#1f2937',
-                        fontSize: '0.9rem',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      <option value="1st Year">1st Year</option>
-                      <option value="2nd Year">2nd Year</option>
-                      <option value="3rd Year">3rd Year</option>
-                      <option value="4th Year">4th Year</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 600, color: '#4b5563', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '6px' }}>
-                    PASSWORD
-                  </label>
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showRegisterPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={registerPassword}
-                      onChange={(e) => setRegisterPassword(e.target.value)}
-                      style={{
-                        width: '100%',
-                        padding: '10px 48px 10px 14px',
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        background: 'white',
-                        color: '#1f2937',
-                        fontSize: '0.9rem',
-                        outline: 'none'
-                      }}
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRegisterPassword(!showRegisterPassword)}
-                      style={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        color: '#9ca3af',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      {showRegisterPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                    </button>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  style={{
-                    width: '100%',
-                    padding: '14px',
-                    background: '#111827',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s',
-                    marginTop: '8px',
-                    opacity: isLoading ? 0.7 : 1
-                  }}
-                >
-                  {isLoading ? 'Activating...' : 'Activate Account'} <ArrowRight size={18} />
-                </button>
-
-                <div style={{ marginTop: '12px', textAlign: 'center' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#6b7280' }}>Already activated? </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsRegisterMode(false);
-                      setLoginError('');
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#2563eb',
-                      fontWeight: 600,
-                      fontSize: '0.9rem',
-                      cursor: 'pointer',
-                      padding: '0 4px',
-                      textDecoration: 'underline'
-                    }}
-                  >
-                    Sign In ➔
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Quick Demo Info */}
-            {!isRegisterMode && (
-              <div style={{ marginTop: '32px', padding: '14px 16px', background: '#fdfbf7', border: '1px solid #f3f0e8', borderRadius: '8px', fontSize: '0.8rem', color: '#6b7280', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: '1rem', lineHeight: '1' }}>💡</span>
-                <div>
-                  <strong>Demo Mode</strong>: Credentials auto-fill when switching portal tabs on the left. Click <strong>Sign In</strong> to proceed.
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
+      );
+    }
+
+    const scrollToFeatures = () => {
+      const el = document.getElementById('features-section');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    return (
+      <div style={{ backgroundColor: '#0b0f19', color: '#f8fafc', minHeight: '100vh', width: '100vw', fontFamily: 'var(--font-sans)', overflowX: 'hidden' }}>
+        {/* HERO SECTION */}
+        <section style={{ position: 'relative', display: 'flex', flexDirection: 'column', minHeight: '100vh', padding: '40px 20px', justifyContent: 'space-between' }} className="login-grid-bg">
+          {/* Header Bar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', maxWidth: '1200px', width: '100%', margin: '0 auto', zIndex: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{ background: '#2563eb', padding: '6px', borderRadius: '8px', color: 'white' }}>
+                <GraduationCap size={22} />
+              </div>
+              <span style={{ fontSize: '1.25rem', fontWeight: 800, color: 'white', letterSpacing: '-0.5px' }}>Placemate</span>
+            </div>
+            <button 
+              onClick={() => { setIsRegisterMode(false); setShowLoginModal(true); }}
+              style={{
+                background: '#ffffff', color: '#0b0f19', padding: '8px 20px', borderRadius: '20px', border: 'none', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer', boxShadow: '0 4px 12px rgba(255,255,255,0.1)'
+              }}
+            >
+              Sign In
+            </button>
+          </div>
+
+          {/* Hero Content */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', maxWidth: '800px', width: '100%', margin: 'auto', zIndex: 10, padding: '40px 0' }}>
+            <div className="landing-badge" style={{ marginBottom: '24px' }}>
+              <div className="dot"></div>
+              <span>SRM INSTITUTE OF SCIENCE AND TECHNOLOGY</span>
+            </div>
+            <h1 className="landing-hero-title">
+              Campus Placement <br />
+              <span className="text-emerald-gradient">Reimagined.</span>
+            </h1>
+            <p style={{ color: '#94a3b8', fontSize: '1.1rem', lineHeight: 1.6, maxWidth: '640px', margin: '24px 0 36px 0', fontWeight: 400 }}>
+              Havloc is a full-stack placement management system built for SRM — connecting students, faculty, and placement officers in one unified platform.
+            </p>
+            <div style={{ display: 'flex', gap: '16px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => { setIsRegisterMode(false); setShowLoginModal(true); }}
+                style={{
+                  background: '#ffffff', color: '#0b0f19', padding: '14px 28px', borderRadius: '24px', border: 'none', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 20px rgba(255,255,255,0.15)'
+                }}
+              >
+                <ArrowRight size={18} /> Enter Portal
+              </button>
+              <button 
+                onClick={scrollToFeatures}
+                style={{
+                  background: 'rgba(255,255,255,0.04)', color: '#94a3b8', padding: '14px 28px', borderRadius: '24px', border: '1px solid rgba(255,255,255,0.1)', fontWeight: 600, fontSize: '0.95rem', cursor: 'pointer'
+                }}
+              >
+                Explore Features v
+              </button>
+            </div>
+          </div>
+          <div></div>
+        </section>
+
+        {/* ABOUT SECTION (Cream/Beige Panel) */}
+        <section style={{ backgroundColor: '#faf8f5', color: '#111827', padding: '80px 24px' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            {/* About Navigation Overview Bar */}
+            <div className="about-nav-container">
+              {['PLACEMENT RECORDS', 'STUDENT PORTAL', 'COMPANY MANAGEMENT', 'FACULTY OVERSIGHT', 'ROUND TRACKER', 'ANALYTICS', 'REST API', 'ROLE-BASED'].map((item, idx) => (
+                <span key={idx} className={`about-nav-link ${idx === 1 ? 'active' : ''}`}>{item}</span>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '60px', alignItems: 'center' }}>
+              {/* Left Column: Description */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', color: '#10b981', textTransform: 'uppercase' }}>ABOUT THE PROJECT</span>
+                <h2 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, lineHeight: 1.15, color: '#111827' }}>
+                  One platform for the <br />entire placement <br />lifecycle
+                </h2>
+                <p style={{ color: '#4b5563', fontSize: '1rem', lineHeight: 1.6 }}>
+                  Havloc (Highly Automated Virtual Liaison for Opportunities and Campus) was developed as a B.Tech DBMS project at SRM Institute of Science and Technology to solve the fragmented, manual processes in campus placement.
+                </p>
+                <p style={{ color: '#4b5563', fontSize: '1rem', lineHeight: 1.6 }}>
+                  From job listings and student applications to round-by-round tracking and placement analytics — everything is centralized, real-time, and role-aware.
+                </p>
+                <div style={{ marginTop: '12px' }}>
+                  {['React.js', 'Node.js', 'MongoDB', 'REST API', 'Vanilla CSS'].map((tag, idx) => (
+                    <span key={idx} className="about-tech-tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Outline Cards Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="outline-card">
+                  <div className="outline-card-icon" style={{ color: '#2563eb' }}>
+                    <Rocket size={20} />
+                  </div>
+                  <h3 className="outline-card-title">Built from scratch</h3>
+                  <p className="outline-card-desc">No templates used. Crafted carefully for high performance and clean structures.</p>
+                </div>
+
+                <div className="outline-card">
+                  <div className="outline-card-icon" style={{ color: '#10b981' }}>
+                    <Laptop size={20} />
+                  </div>
+                  <h3 className="outline-card-title">Fully Responsive</h3>
+                  <p className="outline-card-desc">Beautifully adaptable from mobile smartphones to ultra-wide monitors.</p>
+                </div>
+
+                <div className="outline-card">
+                  <div className="outline-card-icon" style={{ color: '#a855f7' }}>
+                    <Shield size={20} />
+                  </div>
+                  <h3 className="outline-card-title">JWT Auth</h3>
+                  <p className="outline-card-desc">Robust security framework delivering secure, role-based dashboard control.</p>
+                </div>
+
+                <div className="outline-card">
+                  <div className="outline-card-icon" style={{ color: '#ec4899' }}>
+                    <Code size={20} />
+                  </div>
+                  <h3 className="outline-card-title">API-First</h3>
+                  <p className="outline-card-desc">Developed with clean, well-documented REST APIs for perfect modular integration.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* FEATURES SECTION */}
+        <section id="features-section" style={{ backgroundColor: '#ffffff', color: '#111827', padding: '80px 24px', borderTop: '1px solid #e5e7eb' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', color: '#10b981', textTransform: 'uppercase' }}>FEATURES</span>
+            <h2 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, color: '#111827', marginTop: '12px', marginBottom: '48px' }}>
+              Everything placement <span style={{ fontStyle: 'italic', color: '#10b981' }}>needs.</span>
+            </h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '30px' }}>
+              {[
+                { title: 'Student Portal', desc: 'Students can browse opportunities, apply to jobs, track application rounds, and manage their profile all in one place.', icon: <GraduationCap size={20} />, color: '#2563eb' },
+                { title: 'Company Management', desc: 'Placement officers can onboard companies, post job listings, and manage the full recruitment pipeline.', icon: <Building size={20} />, color: '#10b981' },
+                { title: 'Faculty Oversight', desc: 'Faculty and HODs get real-time visibility into student placement progress and department statistics.', icon: <Users size={20} />, color: '#a855f7' },
+                { title: 'Analytics & Reports', desc: 'Detailed placement analytics, internship ratios, CTC breakdowns, and exportable reports for stakeholders.', icon: <TrendingUp size={20} />, color: '#3b82f6' },
+                { title: 'Round Tracking', desc: 'Track every interview round — aptitude, technical, HR — with live status updates for each student.', icon: <CheckCircle size={20} />, color: '#f59e0b' },
+                { title: 'Role-Based Access', desc: 'Separate secure portals for students, faculty, and placement officers with role-specific dashboards.', icon: <Shield size={20} />, color: '#ec4899' }
+              ].map((feat, idx) => (
+                <div key={idx} className="feature-card">
+                  <div style={{ display: 'flex', width: '40px', height: '40px', borderRadius: '50%', backgroundColor: 'rgba(0,0,0,0.02)', color: feat.color, alignItems: 'center', justifyContent: 'center' }}>
+                    {feat.icon}
+                  </div>
+                  <h3 style={{ fontSize: '1.15rem', fontWeight: 700, color: '#111827' }}>{feat.title}</h3>
+                  <p style={{ color: '#6b7280', fontSize: '0.9rem', lineHeight: 1.5 }}>{feat.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* STAKEHOLDERS LOGIN SECTION */}
+        <section style={{ backgroundColor: '#0b0f19', color: '#ffffff', padding: '80px 24px', position: 'relative' }} className="login-grid-bg">
+          <div style={{ maxWidth: '1200px', margin: '0 auto', zIndex: 10, position: 'relative' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1.5px', color: '#10b981', textTransform: 'uppercase', display: 'block', textAlign: 'center', marginBottom: '12px' }}>
+              THREE PORTALS
+            </span>
+            <h2 className="font-serif" style={{ fontSize: '2.8rem', fontWeight: 500, textAlign: 'center', marginBottom: '48px', color: '#ffffff' }}>
+              One system, every <span style={{ fontStyle: 'italic', color: '#10b981' }}>stakeholder.</span>
+            </h2>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '30px', maxWidth: '960px', margin: '0 auto' }}>
+              {[
+                { role: 'student', title: 'Student', desc: 'Apply, track rounds, manage profile', color: '#2563eb', hoverClass: 'active-student', icon: <GraduationCap size={24} /> },
+                { role: 'hod', title: 'Faculty / HOD', desc: 'Monitor students, view reports', color: '#a855f7', hoverClass: 'active-faculty', icon: <Users size={24} /> },
+                { role: 'officer', title: 'Placement Officer', desc: 'Manage companies, jobs, placements', color: '#10b981', hoverClass: 'active-officer', icon: <Building size={24} /> }
+              ].map((p, idx) => (
+                <div key={idx} className={`stakeholder-card ${p.hoverClass}`}>
+                  <div style={{ display: 'flex', width: '56px', height: '56px', borderRadius: '16px', backgroundColor: 'rgba(255,255,255,0.03)', color: p.color, alignItems: 'center', justifyContent: 'center', marginBottom: '20px' }}>
+                    {p.icon}
+                  </div>
+                  <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'white', marginBottom: '8px' }}>{p.title}</h3>
+                  <p style={{ color: '#94a3b8', fontSize: '0.9rem', lineHeight: 1.4, marginBottom: '24px' }}>{p.desc}</p>
+                  <button 
+                    onClick={() => {
+                      setLoginRole(p.role);
+                      setEmail(CREDENTIALS[p.role].email);
+                      setPassword(CREDENTIALS[p.role].password);
+                      setIsRegisterMode(false);
+                      setLoginError('');
+                      setShowLoginModal(true);
+                    }}
+                    style={{
+                      background: 'none', border: 'none', color: p.color, fontWeight: 700, fontSize: '0.85rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', letterSpacing: '0.5px'
+                    }}
+                  >
+                    LOGIN ➔
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* TEAM FOOTER SECTION */}
+        <footer style={{ backgroundColor: '#faf8f5', color: '#4b5563', padding: '60px 24px', borderTop: '1px solid #e5e7eb' }}>
+          <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '30px', alignItems: 'center', textAlign: 'center' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '1px', color: '#10b981', textTransform: 'uppercase' }}>THE TEAM</span>
+            <h2 className="font-serif" style={{ fontSize: '2.5rem', fontWeight: 500, color: '#111827' }}>
+              Built by students, <br /><span style={{ fontStyle: 'italic', color: '#10b981' }}>for students.</span>
+            </h2>
+            <div style={{ borderTop: '1px solid #e5e7eb', width: '100%', paddingTop: '20px', marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', color: '#9ca3af' }}>
+              <span>© {new Date().getFullYear()} Placemate Ecosystem. All rights reserved.</span>
+              <span>Centralized Career & Placement System</span>
+            </div>
+          </div>
+        </footer>
       </div>
     );
   }
