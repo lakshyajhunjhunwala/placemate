@@ -264,7 +264,12 @@ export default function App() {
   const [registerPassword, setRegisterPassword] = useState('');
 
   // Global States
-  const [studentProfile, setStudentProfile] = useState({});
+  const [studentProfile, setStudentProfile] = useState({
+    skills: [],
+    projects: [],
+    certifications: [],
+    achievements: []
+  });
   const [students, setStudents] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [jobs, setJobs] = useState([]);
@@ -318,7 +323,14 @@ export default function App() {
       ]);
 
       if (userRole === 'student') {
-        setStudentProfile(profile || {});
+        const p = profile || {};
+        setStudentProfile({
+          ...p,
+          skills: p.skills || [],
+          projects: p.projects || [],
+          certifications: p.certifications || [],
+          achievements: p.achievements || []
+        });
         setResumes(resList || []);
         setNotifications(noteList || []);
       } else {
